@@ -138,5 +138,11 @@ BC.observe=function(){
     }})},{threshold:.12});
   els.forEach(function(e){e.setAttribute('data-o','1');io.observe(e)});
 };
+/* ---- delivery helpers (used by the order page, admin page and rider page) ---- */
+BC.hasPin=function(o){return !!o&&o.delivery_lat!=null&&o.delivery_lng!=null&&isFinite(Number(o.delivery_lat))&&isFinite(Number(o.delivery_lng))};
+BC.addrText=function(o){return [o.delivery_street,o.delivery_barangay,[o.delivery_city,o.delivery_postal].filter(Boolean).join(' ')].filter(Boolean).join(', ')};
+BC.mapsUrl=function(o){return 'https://www.google.com/maps/dir/?api=1&destination='+(BC.hasPin(o)?Number(o.delivery_lat)+','+Number(o.delivery_lng):encodeURIComponent(BC.addrText(o)))};
+/* customer note without the address line that order.js adds at the start as a safety copy */
+BC.noteOf=function(o){var s=String(o.instructions||'');if(o.is_delivery&&s.indexOf('Delivery: ')===0){var k=s.indexOf(' | ');return k>-1?s.slice(k+3):''}return s};
 window.BC=BC;
 })();

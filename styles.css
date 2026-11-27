@@ -1,5 +1,5 @@
 :root{--bg:#f3f6fb;--surface:#fff;--text:#0f1b30;--muted:#5f6f89;--line:#d9e2f0;--accent:#254f8e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root{--bg:#0b1426;--surface:#13233f;--text:#eef3fb;--muted:#b3a294;--line:#22365a;--accent:#a9c8f5;color-scheme:dark}}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1426;--surface:#13233f;--text:#eef3fb;--muted:#9fb0cc;--line:#22365a;--accent:#a9c8f5;color-scheme:dark}}
 html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;line-height:1.6}
@@ -418,3 +418,42 @@ a.obtn{text-decoration:none}
 h1,h2,h3,.logo{font-family:var(--display)}
 h1,h2{font-weight:800;letter-spacing:-.01em}
 h1{letter-spacing:-.02em}
+
+/* Home page mobile hero (moved here from an inline <style> in index.html) */
+@media(max-width:760px){
+  .homepage .top{background:linear-gradient(180deg,rgba(9,20,44,.1) 0,rgba(9,20,44,.35) 30%,rgba(9,20,44,.88) 62%,#0b1426 90%),url(hero-mobile-v2.jpg?v=2) 50% 0/cover no-repeat,#0b1426}
+  /* less empty photo above the text, bigger text */
+  .homepage .hero{padding:clamp(120px,40vw,300px) 0 90px}
+  .homepage .hero .eyebrow{font-size:.95rem;letter-spacing:.14em}
+  .homepage .hero h1{font-size:clamp(2.6rem,10.5vw,4.4rem);line-height:1.05;margin:14px 0 16px}
+  .homepage .hero p{font-size:clamp(1.15rem,4.4vw,1.6rem);line-height:1.5}
+  .homepage .hero .btns{margin-top:28px;gap:12px}
+  .homepage .hero .btns .btn{padding:17px 12px;font-size:clamp(1.05rem,3.8vw,1.35rem)}
+  .homepage .hero .btns .btn svg{width:26px;height:26px}
+  .homepage .herochips{gap:10px;margin-top:20px}
+  .homepage .hchip{font-size:clamp(.9rem,3.2vw,1.1rem);padding:12px 10px;white-space:normal}
+}
+
+/* ===== Delivery (order page, admin cards, rider page) ===== */
+.optcards.three{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.optcards.three button{padding:16px 6px;font-size:.92rem}
+.obtn.alt{background:var(--surface);color:var(--text);border:1px solid var(--line)}
+.gpsbox{display:flex;flex-direction:column;gap:6px}
+.gpsbox .obtn{width:100%}
+.gpsok{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,#2f9e63 16%,transparent);font-size:.9rem;color:var(--text)}
+.gpsok a{color:var(--accent)}
+.gpsok .olink{display:inline;padding:0;margin:0 0 0 auto}
+.raddr{display:flex;flex-direction:column;gap:2px;margin:10px 0;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 10%,transparent);line-height:1.4}
+.raddr b{font-size:1.05rem}
+.raddr .link{align-self:flex-start;margin-top:8px}
+.ocard .btnrow a{display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:.85rem;text-decoration:none}
+.ocard .btnrow a:hover{border-color:var(--accent)}
+.ocard .btnrow a.main{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#3f78c4));border-color:transparent;color:var(--bg);font-weight:600}
+.rtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0}
+.rtop .hint{margin:0}
+.seg .cnt{display:inline-block;min-width:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:color-mix(in srgb,var(--text) 14%,transparent);font-size:.78rem}
+.seg button.on .cnt{background:rgba(255,255,255,.25)}
+.rcard .btnrow a,.rcard .btnrow button{padding:12px 18px;font-size:.95rem}
+.paidbar{margin:8px 0;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,#2f9e63 16%,transparent);font-size:.88rem}
+.routebar{margin:0 0 14px}
+.routebar a{width:100%;text-decoration:none}

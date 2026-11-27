@@ -5,11 +5,13 @@ Hosted as static files (GitHub Pages). Backend is Supabase (see `config.js`).
 Owner edits on a phone with the Acode app, so keep changes small and easy to copy over.
 
 ## Files
-- `index.html`, `order.html`, `contact.html`, `admin.html`: public site, online ordering, contact, staff admin
+- `index.html`, `order.html`, `contact.html`, `admin.html`: public site, online ordering (pickup, dine in, delivery), contact, staff admin
 - `pos.html` + `pos.js` + `pos.css`: in-store POS (menu from `menu.js`)
 - `styles.css`: theme for the website pages (blue, from the logo)
 - `shop.js`, `order.js`, `admin.js`, `script.js`: site logic; `menu.js`: menu data
+- `rider.html` + `rider.js`: delivery rider page (staff login, lists delivery orders, Navigate / Call / Picked up / Delivered)
 - `supabase-sales.sql`: SQL already run in Supabase (do not re-run)
+- `supabase-delivery.sql`: delivery columns + `set_delivery()` function. Run ONCE in Supabase > SQL Editor (safe to run again). Delivery stays hidden on the order page until it has been run.
 - `lazy-cup-logo.png`, `lazy-cup-favicon.png`, `hero-bg.jpg`, `hero-mobile-v2.jpg`: branding images
 
 ## Rules when changing code
@@ -37,3 +39,9 @@ Owner edits on a phone with the Acode app, so keep changes small and easy to cop
 1. Reproduce it (open the page, check the browser console, read the on-page error notice).
 2. Find the cause before editing; fix the cause, not the symptom.
 3. Re-test the page on desktop and mobile width, then summarise what was wrong and what changed.
+
+## Delivery notes
+- Customers pick Delivery at checkout, optionally pin their GPS location (browser location, no outside service) and type street/house, barangay, city and 4-digit postal code. Delivery is paid online (GCash/Maya), never at the counter.
+- `place_order()` is not changed. Delivery orders are saved as `order_type = 'pickup'` with `is_delivery = true`; the address is saved by `set_delivery()` and also copied at the start of the order note as a backup.
+- To force a GPS pin before ordering, set `REQUIRE_PIN=true` at the top of `order.js`.
+- Riders sign in on `rider.html` with a staff account (same login as admin). Delivery on/off is in Admin > Store & payments.

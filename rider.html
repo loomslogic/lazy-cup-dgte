@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Rider · Lazy Cup</title>
+<link rel="icon" type="image/png" href="lazy-cup-favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap">
+<link rel="stylesheet" href="styles.css?v=41">
+</head>
+<body class="orderpage">
+<div class="top slim"><div class="wrap">
+<header><a class="brand" href="index.html"><img src="lazy-cup-logo.png" alt="Lazy Cup logo"><span class="logo">Lazy Cup</span></a><nav id="signedIn" hidden><button class="olink" id="signOut">Sign out</button></nav></header>
+<div class="ohero"><div class="eyebrow">Rider</div><h1>Deliveries</h1></div>
+</div></div>
+
+<div class="wrap omain">
+<div id="notice"></div>
+
+<div id="login" class="card oform" hidden>
+  <div class="lbl">Rider login</div>
+  <div class="hint">Sign in with the staff account the shop gave you.</div>
+  <label>Email<input id="rEmail" type="email" autocomplete="username"></label>
+  <label>Password<input id="rPass" type="password" autocomplete="current-password"></label>
+  <div class="err" id="loginErr"></div>
+  <button class="obtn big" id="doLogin">Unlock</button>
+</div>
+
+<div id="panel" hidden>
+  <div class="seg" id="rfilter"></div>
+  <div class="rtop"><span class="hint" id="rUpdated"></span><button type="button" class="editbtn" id="refresh">Refresh</button></div>
+  <div class="routebar" id="routeBar" hidden></div>
+  <div id="rlist"></div>
+</div>
+</div>
+
+<script>window.__errs=[];window.addEventListener('error',function(e){var t=e.target;__errs.push(t&&t.tagName==='SCRIPT'?'Could not load '+(t.getAttribute('src')||'a script'):(e.message||'Error')+(e.filename?' ('+String(e.filename).split('/').pop().split('?')[0]+', line '+e.lineno+')':''))},true)</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.109.0/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shop.js?v=18"></script>
+<script src="rider.js?v=1"></script>
+<script>if(!window.__riderLoaded)document.getElementById("notice").innerHTML='<div class="notice warn">rider.js did not load. Upload rider.js to the same folder as rider.html, then reload.<br><small>Details: '+((window.__errs||[]).join(" · ")||"no error reported (the file may be missing or empty)")+'</small></div>'</script>
+</body>
+</html>

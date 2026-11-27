@@ -5,7 +5,9 @@ if(!window.BC){var __n=document.getElementById('notice');if(__n)__n.innerHTML='<
 var BC=window.BC,$=function(s){return document.querySelector(s)},$$=function(s){return [].slice.call(document.querySelectorAll(s))};
 var peso=BC.peso,esc=BC.esc,sb=BC.sb;
 var STORE_KEY='sbc_order';
-var settings=null,online=false,canOrder=false,step=1,info=null,orderType='pickup',payMethod='gcash',proofBlob=null,pollT=null,sel='all';
+/* Delivery: set to true to force customers to pin their GPS location before they can order delivery */
+var REQUIRE_PIN=false;
+var settings=null,online=false,canOrder=false,step=1,info=null,orderType='pickup',payMethod='gcash',proofBlob=null,pollT=null,sel='all',geo=null,deliveryReady=false;
 var ICON={
   plus:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   minus:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>',
@@ -140,7 +142,7 @@ function methods(){
 var cashLock=false; /* turns on if the server says this number can't use counter payment */
 function counterRules(){var s=settings||{},mx=Number(s.counter_max_total);return {on:s.counter_window_min!=null,max:mx>0?mx:300,win:Number(s.counter_window_min)||20}}
 function paintMethods(){
-  var m=methods(),R=counterRules(),total=BC.totals().total,hasOther=m.some(function(x){return x.id!=='cash'}),lockMsg='';
+  var m=methods().filter(function(x){return orderType!=='delivery'||x.id!=='cash'}),R=counterRules(),total=BC.totals().total,hasOther=m.some(function(x){return x.id!=='cash'}),lockMsg='';
   if(hasOther){if(cashLock)lockMsg='Not available';else if(total>R.max)lockMsg='Up to '+peso(R.max)}
   m.forEach(function(x){x.off=x.id==='cash'&&!!lockMsg;x.sub=x.off?lockMsg:''});
   if(!m.some(function(x){return x.id===payMethod&&!x.off})){var f=m.filter(function(x){return !x.off})[0];payMethod=(f||m[0]).id}
@@ -153,6 +155,7 @@ function paintMethods(){
     if(m.some(function(x){return x.id==='cash'})&&total>R.max&&!cashLock)note+=' Pay at the counter is only for orders up to '+peso(R.max)+'.';
     if(cashLock)note+=' Pay at the counter isn’t available for your number right now.';
   }
+  if(orderType==='delivery')note='Delivery orders are paid online before we send the rider. '+note;
   $('#payNote').textContent=note;
   $('#toPay').textContent=payMethod==='cash'?'Place order':'Continue to payment →';
 }
@@ -162,14 +165,62 @@ function paintSummary(){
   $('#sumBox').innerHTML=ids.map(function(id){var l=S.cart[id],it=S.idx[l.k],lab=it.p.length>1?((it.z&&it.z[l.s])||''):'';return '<div class="qrow sline"><span>'+l.q+' × '+esc(it.n)+(lab?' <span class="hint">('+esc(lab)+')</span>':'')+'</span><b>'+peso(it.p[l.s]*l.q)+'</b></div>'}).join('')+'<div class="rtotal"><span>Total</span><span>'+peso(BC.totals().total)+'</span></div>';
 }
 function prepDetails(){
+  paintTypes();
   var ok=BC.dineOpen(settings);
   $('[data-t="dine_in"]').disabled=!ok;
   $('#dineNote').textContent=ok?'':('Dine in isn’t available right now'+(settings&&settings.dine_in_reason?': '+settings.dine_in_reason:'')+(settings&&settings.dine_in_reopen_at?'. Back '+BC.fmtWhen(settings.dine_in_reopen_at):'')+'. Pickup is still open.');
   if(!ok&&orderType==='dine_in')setType('pickup');
+  if(orderType==='delivery'&&!deliveryOn())setType('pickup');
   paintMethods();paintSummary();
 }
-function setType(t){orderType=t;$$('#typeSeg button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});$('#seatsWrap').hidden=t!=='dine_in'}
-$('#typeSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&!b.disabled)setType(b.dataset.t)});
+function setType(t){
+  orderType=t;$$('#typeSeg button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});
+  $('#seatsWrap').hidden=t!=='dine_in';$('#deliveryWrap').hidden=t!=='delivery';$('#arriveWrap').hidden=t==='delivery';
+  $('#fNote').maxLength=t==='delivery'?130:300;
+  $('#consentTxt').textContent=t==='delivery'?'I agree that Lazy Cup may use my name, mobile number and delivery address/location to process and deliver this order.':'I agree that Lazy Cup may use my name and mobile number to process this order.';
+  paintMethods();
+}
+/* ---------- delivery ---------- */
+function deliveryOn(){var s=settings||{};return !!(deliveryReady&&s.delivery_available!==false&&methods().some(function(x){return x.id!=='cash'}))}
+function paintTypes(){var on=deliveryOn();$('[data-t="delivery"]').hidden=!on;$('#typeSeg').classList.toggle('three',on)}
+/* delivery only shows up once supabase-delivery.sql has been run (the set_delivery function exists) */
+function checkDelivery(){
+  return Promise.resolve(sb.rpc('set_delivery',{p_ref:'',p_mobile:'',p_street:'',p_barangay:'',p_city:'',p_postal:''})).then(function(r){return !!r&&!r.error}).catch(function(){return false});
+}
+function paintGeo(){
+  var m=$('#gpsMsg'),b=$('#gpsLbl');
+  if(!geo){m.textContent=REQUIRE_PIN?'Required, so our rider can find you.':'Optional, but it helps our rider find you faster.';b.textContent='Use my current location';return}
+  b.textContent='Update my location';
+  m.innerHTML='<div class="gpsok"><b>✓ Location pinned</b><span>±'+geo.acc+' m</span><a href="https://www.google.com/maps?q='+geo.lat+','+geo.lng+'" target="_blank" rel="noopener">Check on map</a><button type="button" class="olink" id="gpsClear">Remove</button></div>'+(geo.acc>150?'<div class="hint">The pin may be off by about '+geo.acc+' m. Try again outdoors for a better fix.</div>':'');
+}
+$('#gpsBtn').onclick=function(){
+  var b=this,m=$('#gpsMsg');
+  if(!navigator.geolocation){m.textContent='Your browser can’t share your location. Please fill in the address below.';return}
+  b.disabled=true;m.textContent='Finding your location…';
+  navigator.geolocation.getCurrentPosition(function(p){
+    b.disabled=false;
+    geo={lat:+p.coords.latitude.toFixed(6),lng:+p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy||0)};
+    paintGeo();
+  },function(e){
+    b.disabled=false;paintGeo();
+    m.textContent=e&&e.code===1?'Location permission was denied. Allow location for this site in your browser settings, or fill in the address below.':e&&e.code===3?'Finding your location took too long. Try again near a window or outdoors.':'We couldn’t get your location. Please try again or fill in the address below.';
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+};
+$('#gpsMsg').addEventListener('click',function(e){if(e.target.id==='gpsClear'){geo=null;paintGeo()}});
+function readAddr(){
+  function c(id,n){return $(id).value.replace(/[|\r\n]+/g,' ').replace(/\s+/g,' ').trim().slice(0,n)}
+  return {street:c('#dStreet',70),barangay:c('#dBrgy',35),city:c('#dCity',35),postal:$('#dPostal').value.replace(/\D/g,'').slice(0,4)};
+}
+function addrLine(d){return d.street+', '+d.barangay+', '+d.city+' '+d.postal}
+function saveDelivery(ref,mobile,d,tries){
+  var again=function(){return tries>0?saveDelivery(ref,mobile,d,tries-1):false};
+  return Promise.resolve(sb.rpc('set_delivery',{p_ref:ref,p_mobile:mobile,p_street:d.street,p_barangay:d.barangay,p_city:d.city,p_postal:d.postal,p_lat:geo?geo.lat:null,p_lng:geo?geo.lng:null,p_accuracy:geo?geo.acc:null})).then(function(r){
+    return (r&&!r.error&&r.data===true)?true:again();
+  },again);
+}
+function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify(info))}catch(x){}}
+$('#typeSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&!b.disabled&&!b.hidden)setType(b.dataset.t)});
+paintGeo();
 
 var ERR={STORE_CLOSED:'Sorry, the store just closed. Please try again later.',DINE_IN_UNAVAILABLE:'Dine in just became unavailable. Please choose Pickup.',ITEM_UNAVAILABLE:'An item in your order is no longer available. Please go back and review your cart.',BAD_NAME:'Please enter your full name.',BAD_MOBILE:'Please enter a valid mobile number (09XXXXXXXXX).',BAD_QTY:'Please check the quantities in your cart.',BAD_ITEMS:'Your cart is empty.',BAD_SIZE:'Please review your cart.',BAD_METHOD:'That payment method isn’t available right now. Please choose another.'};
 function errText(e){var m=(e&&e.message)||'';
@@ -185,21 +236,36 @@ $('#detailsForm').addEventListener('submit',function(e){
   if(!/^09\d{9}$/.test(mobile)){err.textContent='Please enter a valid mobile number (09XXXXXXXXX).';return}
   var seats=parseInt($('#fSeats').value,10);
   if(orderType==='dine_in'&&!(seats>=1&&seats<=20)){err.textContent='Please enter how many seats you need (1–20).';return}
+  var d=null,note=$('#fNote').value.trim(),instr=note;
+  if(orderType==='delivery'){
+    d=readAddr();
+    if(d.street.length<3){err.textContent='Please enter your street or house number.';return}
+    if(d.barangay.length<2){err.textContent='Please enter your barangay.';return}
+    if(d.city.length<2){err.textContent='Please enter your city or municipality.';return}
+    if(!/^\d{4}$/.test(d.postal)){err.textContent='Please enter your 4-digit postal code.';return}
+    if(REQUIRE_PIN&&!geo){err.textContent='Please tap “Use my current location” so our rider can find you.';return}
+    if(note.length>130){err.textContent='Please shorten your special instructions to 130 characters for delivery orders.';return}
+    /* the address also travels in the order note, so staff can still see it if the map pin could not be saved */
+    instr='Delivery: '+addrLine(d)+(note?' | '+note:'');
+  }
   if(!$('#fConsent').checked){err.textContent='Please tick the box to continue.';return}
   var btn=$('#toPay');btn.disabled=true;btn.textContent='Please wait…';
   var S=BC.state,items=Object.keys(S.cart).map(function(id){var l=S.cart[id];return {k:l.k,s:l.s,q:l.q}});
-  sb.rpc('place_order',{p_name:name,p_mobile:mobile,p_instructions:$('#fNote').value.trim(),p_type:orderType,p_seats:orderType==='dine_in'?seats:null,p_arrival:$('#fArrive').value,p_items:items,p_method:payMethod}).then(function(r){
-    btn.disabled=false;paintMethods();
+  sb.rpc('place_order',{p_name:name,p_mobile:mobile,p_instructions:instr,p_type:orderType==='delivery'?'pickup':orderType,p_seats:orderType==='dine_in'?seats:null,p_arrival:$('#fArrive').value,p_items:items,p_method:payMethod}).then(function(r){
     if(r.error||!r.data||!r.data.length){
+      btn.disabled=false;paintMethods();
       err.textContent=errText(r.error);
       if(r.error&&/COUNTER_(UNPAID|BLOCKED)/.test(r.error.message||'')){cashLock=true;paintMethods()}
       return;
     }
     var row=r.data[0];
-    info={ref:row.order_ref,total:Number(row.order_total),mobile:mobile,method:payMethod,created:Date.now()};
-    try{localStorage.setItem(STORE_KEY,JSON.stringify(info))}catch(x){}
+    info={ref:row.order_ref,total:Number(row.order_total),mobile:mobile,method:payMethod,created:Date.now(),delivery:d?addrLine(d):''};
+    persist();
     S.cart={};BC.setCart({});updateBar();refreshCtl();
-    if(payMethod==='cash'){showDone('pay_at_counter')}else{showPayment()}
+    var next=function(){btn.disabled=false;paintMethods();if(payMethod==='cash'){showDone('pay_at_counter')}else{showPayment()}};
+    if(!d){next();return}
+    /* keep the button disabled until the address is saved, so nobody places the order twice */
+    return saveDelivery(row.order_ref,mobile,d,1).then(function(ok){if(!ok){info.pinFailed=true;persist()}next()});
   });
 });
 
@@ -244,10 +310,15 @@ $('#paid').onclick=function(){
 /* ---------- done ---------- */
 var LABEL={awaiting_payment:'Waiting for payment',awaiting_verification:'Payment under review',pay_at_counter:'Pay at the counter',paid:'Payment confirmed',preparing:'Being prepared',ready:'Ready!',done:'Completed',cancelled:'Cancelled'};
 var MSG={awaiting_payment:'Please complete your payment and attach your screenshot.',awaiting_verification:'Thanks! We’re checking your payment. Keep this reference number.',pay_at_counter:'Please go to the counter, show this reference number and pay. We start preparing your order once payment is received.',paid:'Your payment is confirmed. We’ll start on your order shortly.',preparing:'Your order is being prepared.',ready:'Your order is ready. We’ll call your name!',done:'Thank you for ordering from Lazy Cup!',cancelled:'This order was cancelled. Please contact the shop if you have questions.'};
-function showDone(s){$('#doneRef').textContent=info.ref;setStatus(s);go(5);clearInterval(pollT);pollT=setInterval(poll,12000);if(s==='pay_at_counter')startCd()}
+function showDone(s){$('#doneRef').textContent=info.ref;$('#doneAddr').textContent=info.delivery?'Delivering to: '+info.delivery+(info.pinFailed?' (We couldn’t save your map pin, so we may message you to confirm your location.)':''):'';setStatus(s);go(5);clearInterval(pollT);pollT=setInterval(poll,12000);if(s==='pay_at_counter')startCd()}
 function setStatus(s){
   if(s!=='pay_at_counter')stopCd();
   var msg=MSG[s]||'';
+  if(info&&info.delivery){
+    if(s==='paid')msg='Your payment is confirmed. We’ll prepare your order and send a rider to your address.';
+    else if(s==='preparing')msg='Your order is being prepared. A rider will bring it to you.';
+    else if(s==='ready')msg='Your order is ready and will be handed to our rider shortly.';
+  }
   if(s==='cancelled'&&info&&info.method==='cash')msg='This order was cancelled because it wasn’t paid at the counter in time. You’re welcome to place a new order.';
   $('#doneStatus').textContent=LABEL[s]||s;$('#doneMsg').textContent=msg;
 }
@@ -309,6 +380,7 @@ function start(){
       paint(res.menu);return;
     }
     canOrder=BC.isOpen(settings);
+    checkDelivery().then(function(ok){deliveryReady=ok;paintTypes()});
     if(!canOrder){notice('<b>We’re closed for online orders right now.</b>'+(settings.store_message?'<br>'+esc(settings.store_message):'')+(settings.store_reopen_at?'<br>Back '+esc(BC.fmtWhen(settings.store_reopen_at))+'.':''),'warn')}
     paint(res.menu);
     resume().then(function(resumed){

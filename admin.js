@@ -80,10 +80,17 @@ function renderOrders(){
     if(o.status!=='done'&&o.status!=='cancelled')btns.push('<button data-a="s" data-id="'+o.id+'" data-s="cancelled">Cancel</button>');
     var win=st?Number(st.counter_window_min)||0:0,end=counter&&win?new Date(o.created_at).getTime()+win*60000:0;
     var bar=counter?'<div class="unpaidbar"><b>UNPAID</b><span>Collect '+peso(o.total)+' cash before preparing</span>'+(end?'<span class="cd" data-end="'+end+'"></span>':'')+'</div>':'';
+    var kind=o.is_delivery?'Delivery':(o.order_type==='dine_in'?'Dine in ('+(o.seats||'?')+' seats)':'Pickup');
+    var dl='';
+    if(o.is_delivery){
+      var ds=o.delivery_status==='delivered'?'Delivered':(o.delivery_status==='out_for_delivery'?'Out for delivery':'Waiting for rider');
+      dl='<div class="raddr"><b>Deliver to</b><span>'+esc(BC.addrText(o))+'</span><span class="hint">'+(BC.hasPin(o)?'GPS pin saved':'No GPS pin')+' · '+ds+'</span><a class="link" href="'+esc(BC.mapsUrl(o))+'" target="_blank" rel="noopener">Open in Maps</a></div>';
+    }
+    var nt=BC.noteOf(o);
     var pill=(o.status==='cancelled'&&o.expired_at)?'Expired · not paid':(LABEL[o.status]||o.status);
     return '<div class="card ocard'+(counter?' unpaid':'')+'"><div class="ohead"><b>#'+esc(o.ref)+' · '+esc(o.customer_name)+'</b><span class="pill">'+esc(pill)+'</span></div>'+bar+
-      '<div class="hint">'+t+' · <a href="tel:'+esc(o.mobile)+'">'+esc(o.mobile)+'</a> · '+(o.order_type==='dine_in'?'Dine in ('+(o.seats||'?')+' seats)':'Pickup')+(o.arrival?' · '+esc(o.arrival):'')+' · '+esc(METHOD[o.payment_method]||'GCash')+'</div>'+
-      '<ul>'+items+'</ul>'+(o.instructions?'<div class="hint">Note: '+esc(o.instructions)+'</div>':'')+
+      '<div class="hint">'+t+' · <a href="tel:'+esc(o.mobile)+'">'+esc(o.mobile)+'</a> · '+kind+(o.arrival&&!o.is_delivery?' · '+esc(o.arrival):'')+' · '+esc(METHOD[o.payment_method]||'GCash')+'</div>'+
+      dl+'<ul>'+items+'</ul>'+(nt?'<div class="hint">Note: '+esc(nt)+'</div>':'')+
       '<div class="rtotal"><span>Total</span><span>'+peso(o.total)+'</span></div><div class="btnrow">'+btns.join('')+'</div></div>';
   }).join('');
   tickCd();
@@ -122,6 +129,9 @@ function seg(sel,val){$$(sel+' button').forEach(function(b){b.classList.toggle('
 function paintQr(id,btn,url){$(id).hidden=!url;if(url)$(id).src=url;$(btn).hidden=!url}
 function paintStore(){
   seg('#openSeg',st.store_open);seg('#dineSeg',st.dine_in_available);
+  var hasDel='delivery_available' in st;
+  seg('#delSeg',bool(st.delivery_available,true));$$('#delSeg button').forEach(function(b){b.disabled=!hasDel});
+  $('#delNote').textContent=hasDel?'':'Delivery stays switched off until you run supabase-delivery.sql in Supabase (SQL Editor).';
   seg('#pgSeg',bool(st.pay_gcash,true));seg('#pmSeg',bool(st.pay_maya,false));seg('#pcSeg',bool(st.pay_cash,true));
   $('#sMsg').value=st.store_message||'';$('#dReason').value=st.dine_in_reason||'';
   $('#gNumIn').value=st.gcash_number||'';$('#gNameIn').value=st.gcash_name||'';
@@ -145,7 +155,7 @@ $$('.quick').forEach(function(q){
   });
 });
 function bindSeg(sel,field){$(sel).addEventListener('click',function(e){var b=e.target.closest('button');if(!b||!st)return;st[field]=b.dataset.v==='1';paintStore()})}
-bindSeg('#openSeg','store_open');bindSeg('#dineSeg','dine_in_available');bindSeg('#pgSeg','pay_gcash');bindSeg('#pmSeg','pay_maya');bindSeg('#pcSeg','pay_cash');
+bindSeg('#openSeg','store_open');bindSeg('#dineSeg','dine_in_available');bindSeg('#delSeg','delivery_available');bindSeg('#pgSeg','pay_gcash');bindSeg('#pmSeg','pay_maya');bindSeg('#pcSeg','pay_cash');
 function bindQr(fileSel,clearSel,field){
   $(fileSel).addEventListener('change',function(){
     var f=this.files&&this.files[0];if(!f||!st)return;
@@ -164,6 +174,7 @@ $('#saveStore').onclick=function(){
   var row={store_open:st.store_open,store_message:$('#sMsg').value.trim(),store_reopen_at:st.store_reopen_at||null,dine_in_available:st.dine_in_available,dine_in_reason:$('#dReason').value.trim(),dine_in_reopen_at:st.dine_in_reopen_at||null,
     gcash_number:$('#gNumIn').value.trim(),gcash_name:$('#gNameIn').value.trim(),maya_number:$('#mNumIn').value.trim(),maya_name:$('#mNameIn').value.trim(),
     pay_gcash:bool(st.pay_gcash,true),pay_maya:bool(st.pay_maya,false),pay_cash:bool(st.pay_cash,true),gcash_qr:st.gcash_qr||'',maya_qr:st.maya_qr||''};
+  if('delivery_available' in st)row.delivery_available=bool(st.delivery_available,true);
   if('counter_window_min' in st){
     var cm=parseFloat($('#cMax').value),cw=parseInt($('#cWin').value,10),cb=parseInt($('#cBlock').value,10);
     if(!(cm>=50)||!(cw>=5&&cw<=120)||!(cb>=0&&cb<=10)){b.disabled=false;$('#storeMsg').textContent='Counter rules: max amount must be at least 50, pay window 5–120 minutes, block 0–10.';return}

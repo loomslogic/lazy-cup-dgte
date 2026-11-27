@@ -7,7 +7,7 @@
 <title>Staff · Lazy Cup</title>
 <link rel="icon" type="image/png" href="lazy-cup-favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap">
-<link rel="stylesheet" href="styles.css?v=40">
+<link rel="stylesheet" href="styles.css?v=41">
 </head>
 <body class="orderpage">
 <div class="top slim"><div class="wrap">
@@ -44,6 +44,11 @@
       <div class="seg" id="dineSeg"><button data-v="1">Available</button><button data-v="0">Not available</button></div>
       <label>Reason shown to customers<input id="dReason" maxlength="140" placeholder="e.g. Peak hours"></label>
       <div class="lbl">Available again at (optional)</div><div class="quick" data-for="dine"></div><div class="hint" id="dWhen"></div>
+    </div>
+
+    <div class="card oform"><h3>Delivery</h3><div class="hint">Turn delivery on or off for customers. Delivery orders are paid online (GCash or Maya). Riders open <a href="rider.html">rider.html</a> and sign in with a staff account.</div>
+      <div class="seg" id="delSeg"><button data-v="1">Available</button><button data-v="0">Not available</button></div>
+      <div class="hint" id="delNote"></div>
     </div>
 
     <div class="card oform"><h3>Payment methods</h3><div class="hint">Choose which payment options customers can pick at checkout.</div>
@@ -99,8 +104,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.109.0/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="menu.js?v=17"></script>
-<script src="shop.js?v=17"></script>
-<script src="admin.js?v=17"></script>
+<script src="shop.js?v=18"></script>
+<script src="admin.js?v=18"></script>
 <script>if(!window.__adminLoaded)document.getElementById("notice").innerHTML='<div class="notice warn">admin.js did not load. Upload admin.js to the same folder as admin.html, then reload.<br><small>Details: '+((window.__errs||[]).join(" · ")||"no error reported (the file may be missing or empty)")+'</small></div>'</script>
 </body>
 </html>
