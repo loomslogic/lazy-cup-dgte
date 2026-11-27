@@ -12,7 +12,6 @@ BC.esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){ret
 BC.uid=function(){return (window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)};
 BC.fmtWhen=function(iso){try{return new Date(iso).toLocaleString('en-PH',{weekday:'short',hour:'numeric',minute:'2-digit'})}catch(e){return ''}};
 BC.isOpen=function(s){if(!s)return true;return !!(s.store_open||(s.store_reopen_at&&new Date()>=new Date(s.store_reopen_at)))};
-BC.dineOpen=function(s){if(!s)return true;return !!(s.dine_in_available||(s.dine_in_reopen_at&&new Date()>=new Date(s.dine_in_reopen_at)))};
 
 /* image shrinker: makes phone photos small before uploading */
 BC.compress=function(file,max,cb){

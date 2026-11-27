@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lazy Cup POS</title>
+<title>Coffee Break POS</title>
 <link rel="icon" href="lazy-cup-logo.png">
-<link rel="stylesheet" href="pos.css?v=40">
+<link rel="stylesheet" href="pos.css?v=41">
 </head>
 <body>
 <header>
-  <div class="brand"><img src="lazy-cup-logo.png" alt=""><b>Lazy Cup POS</b></div>
+  <div class="brand"><img src="lazy-cup-logo.png" alt=""><b>Coffee Break POS</b></div>
   <div class="hbtns"><button id="btnReport">Sales report</button></div>
 </header>
 <main>
@@ -20,7 +20,6 @@
   </section>
   <aside class="cart">
     <div class="row between"><h2>Order <span id="orderNo"></span></h2><button id="btnClear" class="ghost">Clear</button></div>
-    <div class="seg" id="type"><button class="on">Dine-in</button><button>Takeout</button></div>
     <div id="lines" class="lines"></div>
     <div class="total row between"><span>Total</span><b id="total">₱0</b></div>
     <div class="seg" id="pay"><button class="on">Cash</button><button>GCash</button><button>Card</button></div>
@@ -35,6 +34,6 @@
 <dialog id="dReceipt"><div id="receipt" class="receipt"></div><div class="row"><button class="primary" id="btnPrint">Print</button><button class="ghost" data-close>New order</button></div></dialog>
 <dialog id="dReport"><div id="report"></div><div class="row"><button id="btnCsv">Export CSV</button><button class="danger" id="btnWipe">Delete all sales</button><button class="ghost" data-close>Close</button></div></dialog>
 <script src="menu.js"></script>
-<script src="pos.js"></script>
+<script src="pos.js?v=19"></script>
 </body>
 </html>

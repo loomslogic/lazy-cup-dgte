@@ -166,23 +166,19 @@ function paintSummary(){
 }
 function prepDetails(){
   paintTypes();
-  var ok=BC.dineOpen(settings);
-  $('[data-t="dine_in"]').disabled=!ok;
-  $('#dineNote').textContent=ok?'':('Dine in isn’t available right now'+(settings&&settings.dine_in_reason?': '+settings.dine_in_reason:'')+(settings&&settings.dine_in_reopen_at?'. Back '+BC.fmtWhen(settings.dine_in_reopen_at):'')+'. Pickup is still open.');
-  if(!ok&&orderType==='dine_in')setType('pickup');
   if(orderType==='delivery'&&!deliveryOn())setType('pickup');
   paintMethods();paintSummary();
 }
 function setType(t){
   orderType=t;$$('#typeSeg button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});
-  $('#seatsWrap').hidden=t!=='dine_in';$('#deliveryWrap').hidden=t!=='delivery';$('#arriveWrap').hidden=t==='delivery';
+  $('#deliveryWrap').hidden=t!=='delivery';$('#arriveWrap').hidden=t==='delivery';
   $('#fNote').maxLength=t==='delivery'?130:300;
-  $('#consentTxt').textContent=t==='delivery'?'I agree that Lazy Cup may use my name, mobile number and delivery address/location to process and deliver this order.':'I agree that Lazy Cup may use my name and mobile number to process this order.';
+  $('#consentTxt').textContent=t==='delivery'?'I agree that Coffee Break may use my name, mobile number and delivery address/location to process and deliver this order.':'I agree that Coffee Break may use my name and mobile number to process this order.';
   paintMethods();
 }
 /* ---------- delivery ---------- */
 function deliveryOn(){var s=settings||{};return !!(deliveryReady&&s.delivery_available!==false&&methods().some(function(x){return x.id!=='cash'}))}
-function paintTypes(){var on=deliveryOn();$('[data-t="delivery"]').hidden=!on;$('#typeSeg').classList.toggle('three',on)}
+function paintTypes(){$('[data-t="delivery"]').hidden=!deliveryOn()}
 /* delivery only shows up once supabase-delivery.sql has been run (the set_delivery function exists) */
 function checkDelivery(){
   return Promise.resolve(sb.rpc('set_delivery',{p_ref:'',p_mobile:'',p_street:'',p_barangay:'',p_city:'',p_postal:''})).then(function(r){return !!r&&!r.error}).catch(function(){return false});
@@ -222,7 +218,7 @@ function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify(info))}catc
 $('#typeSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&!b.disabled&&!b.hidden)setType(b.dataset.t)});
 paintGeo();
 
-var ERR={STORE_CLOSED:'Sorry, the store just closed. Please try again later.',DINE_IN_UNAVAILABLE:'Dine in just became unavailable. Please choose Pickup.',ITEM_UNAVAILABLE:'An item in your order is no longer available. Please go back and review your cart.',BAD_NAME:'Please enter your full name.',BAD_MOBILE:'Please enter a valid mobile number (09XXXXXXXXX).',BAD_QTY:'Please check the quantities in your cart.',BAD_ITEMS:'Your cart is empty.',BAD_SIZE:'Please review your cart.',BAD_METHOD:'That payment method isn’t available right now. Please choose another.'};
+var ERR={STORE_CLOSED:'Sorry, the store just closed. Please try again later.',ITEM_UNAVAILABLE:'An item in your order is no longer available. Please go back and review your cart.',BAD_NAME:'Please enter your full name.',BAD_MOBILE:'Please enter a valid mobile number (09XXXXXXXXX).',BAD_QTY:'Please check the quantities in your cart.',BAD_ITEMS:'Your cart is empty.',BAD_SIZE:'Please review your cart.',BAD_METHOD:'That payment method isn’t available right now. Please choose another.'};
 function errText(e){var m=(e&&e.message)||'';
   if(m.indexOf('COUNTER_LIMIT')>-1)return 'Pay at the counter is only for orders up to '+peso(counterRules().max)+'. Please choose GCash or Maya for this order.';
   if(m.indexOf('COUNTER_UNPAID')>-1)return 'You already have an unpaid counter order. Please pay for it at the counter first, or choose GCash or Maya for this one.';
@@ -234,8 +230,6 @@ $('#detailsForm').addEventListener('submit',function(e){
   var name=$('#fName').value.trim(),mobile=$('#fMobile').value.replace(/\s|-/g,''),err=$('#formErr');err.textContent='';
   if(name.length<2){err.textContent='Please enter your full name.';return}
   if(!/^09\d{9}$/.test(mobile)){err.textContent='Please enter a valid mobile number (09XXXXXXXXX).';return}
-  var seats=parseInt($('#fSeats').value,10);
-  if(orderType==='dine_in'&&!(seats>=1&&seats<=20)){err.textContent='Please enter how many seats you need (1–20).';return}
   var d=null,note=$('#fNote').value.trim(),instr=note;
   if(orderType==='delivery'){
     d=readAddr();
@@ -251,7 +245,7 @@ $('#detailsForm').addEventListener('submit',function(e){
   if(!$('#fConsent').checked){err.textContent='Please tick the box to continue.';return}
   var btn=$('#toPay');btn.disabled=true;btn.textContent='Please wait…';
   var S=BC.state,items=Object.keys(S.cart).map(function(id){var l=S.cart[id];return {k:l.k,s:l.s,q:l.q}});
-  sb.rpc('place_order',{p_name:name,p_mobile:mobile,p_instructions:instr,p_type:orderType==='delivery'?'pickup':orderType,p_seats:orderType==='dine_in'?seats:null,p_arrival:$('#fArrive').value,p_items:items,p_method:payMethod}).then(function(r){
+  sb.rpc('place_order',{p_name:name,p_mobile:mobile,p_instructions:instr,p_type:'pickup',p_seats:null,p_arrival:$('#fArrive').value,p_items:items,p_method:payMethod}).then(function(r){
     if(r.error||!r.data||!r.data.length){
       btn.disabled=false;paintMethods();
       err.textContent=errText(r.error);
@@ -309,7 +303,7 @@ $('#paid').onclick=function(){
 
 /* ---------- done ---------- */
 var LABEL={awaiting_payment:'Waiting for payment',awaiting_verification:'Payment under review',pay_at_counter:'Pay at the counter',paid:'Payment confirmed',preparing:'Being prepared',ready:'Ready!',done:'Completed',cancelled:'Cancelled'};
-var MSG={awaiting_payment:'Please complete your payment and attach your screenshot.',awaiting_verification:'Thanks! We’re checking your payment. Keep this reference number.',pay_at_counter:'Please go to the counter, show this reference number and pay. We start preparing your order once payment is received.',paid:'Your payment is confirmed. We’ll start on your order shortly.',preparing:'Your order is being prepared.',ready:'Your order is ready. We’ll call your name!',done:'Thank you for ordering from Lazy Cup!',cancelled:'This order was cancelled. Please contact the shop if you have questions.'};
+var MSG={awaiting_payment:'Please complete your payment and attach your screenshot.',awaiting_verification:'Thanks! We’re checking your payment. Keep this reference number.',pay_at_counter:'Please go to the counter, show this reference number and pay. We start preparing your order once payment is received.',paid:'Your payment is confirmed. We’ll start on your order shortly.',preparing:'Your order is being prepared.',ready:'Your order is ready. We’ll call your name!',done:'Thank you for ordering from Coffee Break!',cancelled:'This order was cancelled. Please contact the shop if you have questions.'};
 function showDone(s){$('#doneRef').textContent=info.ref;$('#doneAddr').textContent=info.delivery?'Delivering to: '+info.delivery+(info.pinFailed?' (We couldn’t save your map pin, so we may message you to confirm your location.)':''):'';setStatus(s);go(5);clearInterval(pollT);pollT=setInterval(poll,12000);if(s==='pay_at_counter')startCd()}
 function setStatus(s){
   if(s!=='pay_at_counter')stopCd();

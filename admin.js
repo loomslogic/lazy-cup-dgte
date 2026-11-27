@@ -3,7 +3,7 @@
 window.__adminLoaded=true;
 if(!window.BC){var __n=document.getElementById('notice');if(__n)__n.innerHTML='<div class="notice warn">shop.js did not load. Upload shop.js to the same folder as this page, then reload.</div>';return}
 
-document.title='Staff · Lazy Cup';
+document.title='Staff · Coffee Break';
 var BC=window.BC,$=function(s){return document.querySelector(s)},$$=function(s){return [].slice.call(document.querySelectorAll(s))};
 var peso=BC.peso,esc=BC.esc;
 function notice(t,c){$('#notice').innerHTML=t?'<div class="notice '+(c||'ok')+'">'+t+'</div>':''}
@@ -128,12 +128,12 @@ function when(iso){return iso?'Back '+new Date(iso).toLocaleString('en-PH',{week
 function seg(sel,val){$$(sel+' button').forEach(function(b){b.classList.toggle('on',(b.dataset.v==='1')===!!val)})}
 function paintQr(id,btn,url){$(id).hidden=!url;if(url)$(id).src=url;$(btn).hidden=!url}
 function paintStore(){
-  seg('#openSeg',st.store_open);seg('#dineSeg',st.dine_in_available);
+  seg('#openSeg',st.store_open);
   var hasDel='delivery_available' in st;
   seg('#delSeg',bool(st.delivery_available,true));$$('#delSeg button').forEach(function(b){b.disabled=!hasDel});
   $('#delNote').textContent=hasDel?'':'Delivery stays switched off until you run supabase-delivery.sql in Supabase (SQL Editor).';
   seg('#pgSeg',bool(st.pay_gcash,true));seg('#pmSeg',bool(st.pay_maya,false));seg('#pcSeg',bool(st.pay_cash,true));
-  $('#sMsg').value=st.store_message||'';$('#dReason').value=st.dine_in_reason||'';
+  $('#sMsg').value=st.store_message||'';
   $('#gNumIn').value=st.gcash_number||'';$('#gNameIn').value=st.gcash_name||'';
   $('#mNumIn').value=st.maya_number||'';$('#mNameIn').value=st.maya_name||'';
   paintQr('#gQrImg','#gQrClear',st.gcash_qr);paintQr('#mQrImg','#mQrClear',st.maya_qr);
@@ -141,7 +141,7 @@ function paintStore(){
   ['#cMax','#cWin','#cBlock'].forEach(function(s){$(s).disabled=!hasRules});
   if(hasRules){$('#cMax').value=st.counter_max_total!=null?st.counter_max_total:300;$('#cWin').value=st.counter_window_min!=null?st.counter_window_min:20;$('#cBlock').value=st.counter_block_after!=null?st.counter_block_after:2;$('#cNote').textContent=''}
   else $('#cNote').textContent='These rules are switched off until you run supabase-counter-safety.sql in Supabase (SQL Editor).';
-  $('#sWhen').textContent=when(st.store_reopen_at);$('#dWhen').textContent=when(st.dine_in_reopen_at);
+  $('#sWhen').textContent=when(st.store_reopen_at);
 }
 $$('.quick').forEach(function(q){
   q.innerHTML=['+1 hr','+2 hrs','+4 hrs','Tomorrow 8am','Clear'].map(function(l){return '<button type="button">'+l+'</button>'}).join('');
@@ -150,12 +150,12 @@ $$('.quick').forEach(function(q){
     var d=new Date(),t=b.textContent,v=null;
     if(t==='+1 hr'){d.setHours(d.getHours()+1);v=d}else if(t==='+2 hrs'){d.setHours(d.getHours()+2);v=d}else if(t==='+4 hrs'){d.setHours(d.getHours()+4);v=d}else if(t==='Tomorrow 8am'){d.setDate(d.getDate()+1);d.setHours(8,0,0,0);v=d}
     var iso=v?v.toISOString():null;
-    if(q.dataset.for==='store')st.store_reopen_at=iso;else st.dine_in_reopen_at=iso;
+    st.store_reopen_at=iso;
     paintStore();
   });
 });
 function bindSeg(sel,field){$(sel).addEventListener('click',function(e){var b=e.target.closest('button');if(!b||!st)return;st[field]=b.dataset.v==='1';paintStore()})}
-bindSeg('#openSeg','store_open');bindSeg('#dineSeg','dine_in_available');bindSeg('#delSeg','delivery_available');bindSeg('#pgSeg','pay_gcash');bindSeg('#pmSeg','pay_maya');bindSeg('#pcSeg','pay_cash');
+bindSeg('#openSeg','store_open');bindSeg('#delSeg','delivery_available');bindSeg('#pgSeg','pay_gcash');bindSeg('#pmSeg','pay_maya');bindSeg('#pcSeg','pay_cash');
 function bindQr(fileSel,clearSel,field){
   $(fileSel).addEventListener('change',function(){
     var f=this.files&&this.files[0];if(!f||!st)return;
@@ -171,7 +171,7 @@ function bindQr(fileSel,clearSel,field){
 bindQr('#gQrFile','#gQrClear','gcash_qr');bindQr('#mQrFile','#mQrClear','maya_qr');
 $('#saveStore').onclick=function(){
   if(!st)return;var b=this;b.disabled=true;
-  var row={store_open:st.store_open,store_message:$('#sMsg').value.trim(),store_reopen_at:st.store_reopen_at||null,dine_in_available:st.dine_in_available,dine_in_reason:$('#dReason').value.trim(),dine_in_reopen_at:st.dine_in_reopen_at||null,
+  var row={store_open:st.store_open,store_message:$('#sMsg').value.trim(),store_reopen_at:st.store_reopen_at||null,
     gcash_number:$('#gNumIn').value.trim(),gcash_name:$('#gNameIn').value.trim(),maya_number:$('#mNumIn').value.trim(),maya_name:$('#mNameIn').value.trim(),
     pay_gcash:bool(st.pay_gcash,true),pay_maya:bool(st.pay_maya,false),pay_cash:bool(st.pay_cash,true),gcash_qr:st.gcash_qr||'',maya_qr:st.maya_qr||''};
   if('delivery_available' in st)row.delivery_available=bool(st.delivery_available,true);

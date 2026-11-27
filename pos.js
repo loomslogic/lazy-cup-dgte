@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const peso=n=>'₱'+Number(n).toLocaleString('en-PH',{maximumFractionDigits:2});
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-let cart=[],cat='All',type='Dine-in',pay='Cash',query='';
+let cart=[],cat='All',pay='Cash',query='';
 const today=()=>new Date().toISOString().slice(0,10);
 /* one-time carry-over of sales saved under the old storage key (safe to delete later) */
 try{if(localStorage.getItem('sbc_sales')==null){const o=localStorage.getItem(['baja','da_sales'].join(''));if(o!=null)localStorage.setItem('sbc_sales',o)}}catch(e){}
@@ -37,9 +37,9 @@ function renderCart(){
 }
 function charge(){
   const t=total(),c=pay==='Cash'?(parseFloat($('#cash').value)||0):t;
-  const d=new Date(),sale={no:nextNo(),date:today(),time:d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}),type,pay,items:cart.map(({n,size,p,q})=>({n,size,p,q})),total:t,paid:c,change:Math.max(0,c-t)};
+  const d=new Date(),sale={no:nextNo(),date:today(),time:d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}),pay,items:cart.map(({n,size,p,q})=>({n,size,p,q})),total:t,paid:c,change:Math.max(0,c-t)};
   const all=sales();all.push(sale);store.set('sbc_sales',all);
-  $('#receipt').innerHTML=`<h3>Lazy Cup</h3><p>Cafe by CWH · Dumaguete City</p><p>Order #${sale.no} · ${sale.date} ${sale.time}</p><p>${sale.type} · ${sale.pay}</p><hr>`+
+  $('#receipt').innerHTML=`<h3>Coffee Break</h3><p>Cafe by CWH · Dumaguete City</p><p>Order #${sale.no} · ${sale.date} ${sale.time}</p><p>${sale.pay}</p><hr>`+
    sale.items.map(i=>`<div class="r"><span>${i.q} × ${esc(i.n)} ${i.size||''}</span><span>${peso(i.p*i.q)}</span></div>`).join('')+
    `<hr><div class="r"><b>Total</b><b>${peso(sale.total)}</b></div>`+(sale.pay==='Cash'?`<div class="r"><span>Cash</span><span>${peso(sale.paid)}</span></div><div class="r"><span>Change</span><span>${peso(sale.change)}</span></div>`:'')+`<hr><p>Thank you!</p>`;
   $('#dReceipt').showModal();cart=[];$('#cash').value='';renderCart();
@@ -54,10 +54,10 @@ function report(){
   $('#dReport').showModal();
 }
 function csv(){
-  const r=[['Order','Date','Time','Type','Payment','Item','Size','Qty','Price','Line total']];
-  sales().forEach(s=>s.items.forEach(i=>r.push([s.no,s.date,s.time,s.type,s.pay,i.n,i.size||'',i.q,i.p,i.p*i.q])));
+  const r=[['Order','Date','Time','Payment','Item','Size','Qty','Price','Line total']];
+  sales().forEach(s=>s.items.forEach(i=>r.push([s.no,s.date,s.time,s.pay,i.n,i.size||'',i.q,i.p,i.p*i.q])));
   const b=new Blob([r.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='lazy-cup-sales.csv';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='coffee-break-sales.csv';a.click();
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
@@ -68,7 +68,6 @@ document.addEventListener('click',e=>{
   else if(t.dataset.q){$('#cash').value=t.dataset.q;renderCart()}
   else if(t.hasAttribute('data-close'))t.closest('dialog').close();
 });
-$$('#type button').forEach(b=>b.onclick=()=>{type=b.textContent;$$('#type button').forEach(x=>x.classList.toggle('on',x===b))});
 $$('#pay button').forEach(b=>b.onclick=()=>{pay=b.textContent;$$('#pay button').forEach(x=>x.classList.toggle('on',x===b));renderCart()});
 $('#search').oninput=e=>{query=e.target.value;renderItems()};
 $('#cash').oninput=renderCart;

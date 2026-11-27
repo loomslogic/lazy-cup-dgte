@@ -1,4 +1,4 @@
-/* Lazy Cup menu: shared by the website and the POS.
+/* Coffee Break menu: shared by the website and the POS.
    SAMPLE MENU for reference only. Replace the items and prices with the shop's real ones.
    Format: one price p:[120]  |  two sizes p:[100,120] (labels 16oz / 22oz, or z:["Small","Large"]).
    Optional short description: d:"..."  Optional photo: img:"photo-file.jpg"  */

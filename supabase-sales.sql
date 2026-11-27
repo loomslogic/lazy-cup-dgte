@@ -1,4 +1,4 @@
--- Lazy Cup: "how many bought" counts on the order page
+-- Coffee Break: "how many bought" counts on the order page
 -- Run this ONCE in Supabase > SQL Editor > New query > Run.
 --
 -- It creates a function the website can call to get the total quantity bought

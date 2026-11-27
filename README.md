@@ -1,13 +1,13 @@
-# Lazy Cup (Cafe by CWH): project guide for Claude
+# Coffee Break (Cafe by CWH): project guide for Claude
 
 Plain HTML, CSS and JavaScript site plus a POS screen. No build step, no frameworks.
 Hosted as static files (GitHub Pages). Backend is Supabase (see `config.js`).
 Owner edits on a phone with the Acode app, so keep changes small and easy to copy over.
 
 ## Files
-- `index.html`, `order.html`, `contact.html`, `admin.html`: public site, online ordering (pickup, dine in, delivery), contact, staff admin
+- `index.html`, `order.html`, `contact.html`, `admin.html`: public site, online ordering (pickup, delivery), contact, staff admin
 - `pos.html` + `pos.js` + `pos.css`: in-store POS (menu from `menu.js`)
-- `styles.css`: theme for the website pages (blue, from the logo)
+- `styles.css`: theme for the website pages (brown/caramel, from the logo and cover photo)
 - `shop.js`, `order.js`, `admin.js`, `script.js`: site logic; `menu.js`: menu data
 - `rider.html` + `rider.js`: delivery rider page (staff login, lists delivery orders, Navigate / Call / Picked up / Delivered)
 - `supabase-sales.sql`: SQL already run in Supabase (do not re-run)
@@ -16,7 +16,7 @@ Owner edits on a phone with the Acode app, so keep changes small and easy to cop
 
 ## Rules when changing code
 - Keep it plain HTML/CSS/JS. Do not add frameworks, bundlers or new dependencies.
-- Keep the existing font sizes and the blue theme unless the owner asks otherwise.
+- Keep the existing font sizes and the brown/caramel coffee theme (taken from the logo and cover photo) unless the owner asks otherwise.
 - Make the smallest change that fixes the problem; say which files changed.
 - When you change `styles.css`, `pos.css` or a script, bump its `?v=` number in the HTML so phones do not load a stale copy.
 - Check mobile (about 390px wide) as well as desktop.
